@@ -5,7 +5,7 @@ from pathlib import Path
 _HOOK_MARKER = "# installed-by: pushward"
 _HOOK_TEMPLATE = f"""#!/bin/sh
 {_HOOK_MARKER}
-pushward scan --staged --fail-on high
+pushward pre-push-hook
 exit $?
 """
 

@@ -21,6 +21,7 @@ def run_checks(
     repo_path: Path,
     *,
     staged: bool = False,
+    files: list[Path] | None = None,
     only: set[str] | None = None,
     skip: set[str] | None = None,
 ) -> list[CheckResult]:
@@ -29,7 +30,8 @@ def run_checks(
     if skip:
         names -= skip
 
-    files = list_files(repo_path, staged=staged)
+    if files is None:
+        files = list_files(repo_path, staged=staged)
 
     results = []
     for name in sorted(names):
