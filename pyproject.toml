@@ -1,0 +1,31 @@
+[project]
+name = "pushward"
+version = "0.1.0"
+description = "Escáner pre-commit/pre-push de secretos y datos reales (IPs, nombres, entidades) antes de que lleguen a un repo — arquitectura de plugins."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2.6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff>=0.6"]
+
+[project.scripts]
+pushward = "pushward.cli:main"
+
+[project.entry-points."pushward.checks"]
+secrets = "pushward.checks.secrets:SecretsCheck"
+private_ips = "pushward.checks.private_ips:PrivateIpsCheck"
+watchlist = "pushward.checks.watchlist:WatchlistCheck"
+dni_pattern = "pushward.checks.dni_pattern:DniPatternCheck"
+sensitive_filenames = "pushward.checks.sensitive_filenames:SensitiveFilenamesCheck"
+
+[tool.setuptools.packages.find]
+include = ["pushward*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
