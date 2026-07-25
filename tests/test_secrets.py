@@ -45,6 +45,28 @@ def test_placeholder_no_se_marca(git_repo):
     assert result.findings == []
 
 
+def test_asignacion_env_style_sin_comillas_se_marca(git_repo):
+    write(git_repo, ".env.example", "CH_PASSWORD=sup3rSecr3tVal\n")
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert any("credencial en claro" in f.title for f in result.findings)
+
+
+def test_referencia_a_atributo_no_se_marca(git_repo):
+    # kwarg=atributo real de config -- no es un literal, es codigo normal
+    write(git_repo, "server.py", "smtp_password=cfg.notifications.smtp_password,\n")
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert result.findings == []
+
+
+def test_llamada_a_funcion_no_se_marca(git_repo):
+    write(git_repo, "cli.py", 'password = getpass.getpass("Contraseña: ")\n')
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert result.findings == []
+
+
 def test_sin_secretos_no_hay_hallazgos(git_repo):
     write(git_repo, "clean.py", "x = 1 + 2\n")
     commit_all(git_repo)

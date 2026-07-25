@@ -16,8 +16,19 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
 ]
 
 _ASSIGNMENT = re.compile(
-    r"""(?im)^\s*[\w.]*(password|passwd|secret|api_key|apikey|token)\s*[:=]\s*['"]?([^\s'"]{6,})['"]?"""
+    r"""(?imx)
+    ^\s*[\w.]*(password|passwd|secret|api_key|apikey|token)\s*[:=]\s*
+    (?:
+        ['"]([^'"]{6,})['"]      # valor entre comillas: literal, se acepta tal cual
+        |
+        ([^\s'"]{6,})            # sin comillas: se filtra abajo si tiene pinta de código
+    )
+    """
 )
+# Un valor sin comillas que contenga estos caracteres es casi siempre una
+# referencia a otra variable/atributo o una llamada a función
+# (`cfg.smtp_password`, `getpass.getpass(...)`), no un secreto literal.
+_CODE_LIKE = re.compile(r"[.()\[\]{},;]")
 _PLACEHOLDER_VALUES = {
     "changeme", "change_me", "your_password", "your-password", "xxxxx",
     "placeholder", "example", "todo", "fixme", "<password>", "<secret>",
@@ -55,8 +66,12 @@ class SecretsCheck:
 
                 m = _ASSIGNMENT.search(line)
                 if m:
-                    value = m.group(2).strip("'\"")
-                    if value.lower() not in _PLACEHOLDER_VALUES and not value.startswith("{{"):
+                    quoted, unquoted = m.group(2), m.group(3)
+                    if quoted is None and _CODE_LIKE.search(unquoted):
+                        value = None
+                    else:
+                        value = quoted if quoted is not None else unquoted
+                    if value and value.lower() not in _PLACEHOLDER_VALUES and not value.startswith("{{"):
                         findings.append(
                             Finding(
                                 severity="medium",
