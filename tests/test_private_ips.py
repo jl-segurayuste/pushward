@@ -10,11 +10,11 @@ def _run(git_repo):
 
 
 def test_detecta_ip_192_168(git_repo):
-    write(git_repo, "hosts.txt", "server 192.168.1.100\n")
+    write(git_repo, "hosts.txt", "server 192.168.1.10\n")
     commit_all(git_repo)
     result = _run(git_repo)
     assert len(result.findings) == 1
-    assert "192.168.1.100" in result.findings[0].title
+    assert "192.168.1.10" in result.findings[0].title
 
 
 def test_detecta_ip_10(git_repo):

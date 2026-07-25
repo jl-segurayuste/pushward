@@ -3,24 +3,24 @@ from pushward.watchlist_store import add_entry, build_pattern, load_entries, rem
 
 def test_add_y_load(tmp_path):
     p = tmp_path / "watchlist.txt"
-    add_entry("Consum", path=p)
-    add_entry("S2Grupo", path=p)
-    assert load_entries(p) == ["Consum", "S2Grupo"]
+    add_entry("AcmeCorp", path=p)
+    add_entry("ExampleVendor", path=p)
+    assert load_entries(p) == ["AcmeCorp", "ExampleVendor"]
 
 
 def test_add_no_duplica(tmp_path):
     p = tmp_path / "watchlist.txt"
-    add_entry("Consum", path=p)
-    add_entry("Consum", path=p)
-    assert load_entries(p) == ["Consum"]
+    add_entry("AcmeCorp", path=p)
+    add_entry("AcmeCorp", path=p)
+    assert load_entries(p) == ["AcmeCorp"]
 
 
 def test_remove(tmp_path):
     p = tmp_path / "watchlist.txt"
-    add_entry("Consum", path=p)
-    add_entry("S2Grupo", path=p)
-    assert remove_entry("Consum", path=p) is True
-    assert load_entries(p) == ["S2Grupo"]
+    add_entry("AcmeCorp", path=p)
+    add_entry("ExampleVendor", path=p)
+    assert remove_entry("AcmeCorp", path=p) is True
+    assert load_entries(p) == ["ExampleVendor"]
 
 
 def test_remove_inexistente_devuelve_false(tmp_path):
@@ -30,8 +30,8 @@ def test_remove_inexistente_devuelve_false(tmp_path):
 
 def test_load_ignora_comentarios_y_lineas_vacias(tmp_path):
     p = tmp_path / "watchlist.txt"
-    p.write_text("# comentario\n\nConsum\n\n# otro\nS2Grupo\n", encoding="utf-8")
-    assert load_entries(p) == ["Consum", "S2Grupo"]
+    p.write_text("# comentario\n\nAcmeCorp\n\n# otro\nExampleVendor\n", encoding="utf-8")
+    assert load_entries(p) == ["AcmeCorp", "ExampleVendor"]
 
 
 def test_load_fichero_inexistente_devuelve_vacio(tmp_path):
@@ -52,9 +52,9 @@ def test_build_pattern_no_casa_nombre_distinto():
 
 
 def test_build_pattern_entrada_de_un_solo_token():
-    pattern = build_pattern("Consum")
-    assert pattern.search("cliente: CONSUM")
-    assert not pattern.search("consumo electrico")  # limite de palabra evita el falso positivo
+    pattern = build_pattern("AcmeCorp")
+    assert pattern.search("cliente: ACMECORP")
+    assert not pattern.search("acmecorporate solutions")  # limite de palabra evita el falso positivo
 
 
 def test_build_pattern_concatenado_sin_separador_sigue_casando():

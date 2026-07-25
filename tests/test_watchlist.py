@@ -12,7 +12,7 @@ def _run(git_repo):
 
 def test_watchlist_vacia_no_aplica(git_repo, tmp_path, monkeypatch):
     monkeypatch.setattr(watchlist_store, "WATCHLIST_PATH", tmp_path / "watchlist.txt")
-    write(git_repo, "notes.md", "cliente: Consum\n")
+    write(git_repo, "notes.md", "cliente: AcmeCorp\n")
     commit_all(git_repo)
     result = _run(git_repo)
     assert result.findings == []
@@ -22,8 +22,8 @@ def test_watchlist_vacia_no_aplica(git_repo, tmp_path, monkeypatch):
 def test_watchlist_detecta_en_contenido(git_repo, tmp_path, monkeypatch):
     wl = tmp_path / "watchlist.txt"
     monkeypatch.setattr(watchlist_store, "WATCHLIST_PATH", wl)
-    watchlist_store.add_entry("Consum", path=wl)
-    write(git_repo, "notes.md", "cliente real: consum\n")
+    watchlist_store.add_entry("AcmeCorp", path=wl)
+    write(git_repo, "notes.md", "cliente real: acmecorp\n")
     commit_all(git_repo)
     result = _run(git_repo)
     assert len(result.findings) == 1
@@ -43,7 +43,7 @@ def test_watchlist_detecta_en_nombre_de_fichero(git_repo, tmp_path, monkeypatch)
 def test_watchlist_no_marca_nombres_distintos(git_repo, tmp_path, monkeypatch):
     wl = tmp_path / "watchlist.txt"
     monkeypatch.setattr(watchlist_store, "WATCHLIST_PATH", wl)
-    watchlist_store.add_entry("Consum", path=wl)
+    watchlist_store.add_entry("AcmeCorp", path=wl)
     write(git_repo, "notes.md", "esto no tiene nada que ver\n")
     commit_all(git_repo)
     result = _run(git_repo)

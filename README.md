@@ -15,7 +15,7 @@ pushward — /ruta/al/repo
 
 ── watchlist ────────────────────────────
   3 entrada(s) en la watchlist, 40 fichero(s) analizados, 1 hallazgo(s).
-  [HIGH  ] Entrada de watchlist encontrada: 'Consum' (docs/notas.md:12)
+  [HIGH  ] Entrada de watchlist encontrada: 'AcmeCorp' (docs/notas.md:12)
 
 Total: 2 hallazgo(s) — 2 high
 ```
@@ -77,7 +77,7 @@ justo porque el propio fichero contendría los nombres que quieres proteger,
 así que no tiene sentido que viva dentro de un repo que podrías publicar.
 Casa variantes de mayúsculas y separador (`Ruben.Blanco` == `ruben_blanco` ==
 `RubenBlanco`), con límites de palabra para no marcar falsos positivos como
-"Consum" dentro de "consumo".
+"AcmeCorp" dentro de "consumo".
 
 ## Desarrollo
 

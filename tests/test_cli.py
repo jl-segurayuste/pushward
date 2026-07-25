@@ -100,11 +100,11 @@ def test_pre_push_hook_borrado_de_rama_no_hace_nada(git_repo, monkeypatch, capsy
 
 def test_watchlist_add_list_remove_via_cli(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(watchlist_store, "WATCHLIST_PATH", tmp_path / "watchlist.txt")
-    main(["watchlist", "add", "Consum"])
+    main(["watchlist", "add", "AcmeCorp"])
     main(["watchlist", "list"])
     out = capsys.readouterr().out
-    assert "Consum" in out
-    main(["watchlist", "remove", "Consum"])
+    assert "AcmeCorp" in out
+    main(["watchlist", "remove", "AcmeCorp"])
     main(["watchlist", "list"])
     out = capsys.readouterr().out
     assert "vacía" in out
