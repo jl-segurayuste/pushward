@@ -9,8 +9,12 @@ from pushward.scanner import read_text
 _LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE"
 _NIE_PREFIX = {"X": "0", "Y": "1", "Z": "2"}
 
-_DNI_RE = re.compile(r"\b(\d{8})[-\s]?([A-Za-z])\b")
-_NIE_RE = re.compile(r"\b([XYZxyz])(\d{7})[-\s]?([A-Za-z])\b")
+# El lookbehind negativo excluye timestamps ISO8601 con fracción de segundo
+# (p.ej. "...45.73846735Z"): la "Z" de UTC hace que el número parezca DNI
+# ("8 dígitos + letra"), y con miles de líneas de log da la casualidad de que
+# algunos hasta pasan la validación del dígito de control por puro azar.
+_DNI_RE = re.compile(r"(?<!\.)\b(\d{8})[-\s]?([A-Za-z])\b")
+_NIE_RE = re.compile(r"(?<!\.)\b([XYZxyz])(\d{7})[-\s]?([A-Za-z])\b")
 
 
 def _expected_letter(number: str) -> str:
