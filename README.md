@@ -79,6 +79,22 @@ Casa variantes de mayúsculas y separador (`Ruben.Blanco` == `ruben_blanco` ==
 `RubenBlanco`), con límites de palabra para no marcar falsos positivos como
 "AcmeCorp" dentro de "consumo".
 
+## Excluir ficheros del escaneo (.pushwardignore)
+
+Una herramienta de seguridad necesariamente tiene, en sus propios tests,
+fixtures que *parecen* secretos/DNI reales a propósito (para poder probar
+que los detecta). Un `.pushwardignore` en la raíz del repo (una ruta o
+patrón por línea, comentarios con `#`) excluye esos ficheros del escaneo
+por completo:
+
+```
+tests/test_secrets.py
+tests/test_dni_pattern.py
+```
+
+Úsalo para excepciones concretas y documentadas, no como atajo para ignorar
+avisos reales.
+
 ## Desarrollo
 
 ```bash

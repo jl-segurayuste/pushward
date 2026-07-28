@@ -1,0 +1,6 @@
+# Fixtures de test que a propósito contienen valores con pinta de secreto
+# real (claves, DNI con dígito de control válido) para poder probar que
+# los checks los detectan -- no son fugas reales.
+tests/test_secrets.py
+tests/test_dni_pattern.py
+tests/test_cli.py

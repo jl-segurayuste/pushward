@@ -34,6 +34,16 @@ def test_list_files_staged_solo_devuelve_lo_que_esta_en_stage(git_repo):
     assert names == {"new.py"}
 
 
+def test_list_files_respeta_pushwardignore(git_repo):
+    write(git_repo, ".pushwardignore", "fixtures/fake_secrets.py\n")
+    write(git_repo, "fixtures/fake_secrets.py", "AWS_KEY = 'AKIA...'\n")
+    write(git_repo, "kept.py", "x = 1\n")
+    commit_all(git_repo)
+    files = list_files(git_repo)
+    names = {f.name for f in files}
+    assert names == {".pushwardignore", "kept.py"}
+
+
 def test_read_text_fichero_inexistente_devuelve_none(tmp_path):
     assert read_text(tmp_path / "no-existe.txt") is None
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from pushward.ignorefile import is_ignored, load_patterns
+
 # Árbol vacío de git -- objeto especial ya presente en cualquier repo, útil
 # para diffear "todo lo que hay en <commit>" cuando no existe un punto de
 # partida real (primer push de una rama nueva).
@@ -14,7 +16,12 @@ def _git_name_only(repo_path: Path, cmd: list[str]) -> list[Path]:
     result = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         return []
-    return [repo_path / line for line in result.stdout.splitlines() if line]
+    patterns = load_patterns(repo_path)
+    return [
+        repo_path / line
+        for line in result.stdout.splitlines()
+        if line and not is_ignored(line, patterns)
+    ]
 
 
 def list_files(repo_path: Path, *, staged: bool = False) -> list[Path]:
