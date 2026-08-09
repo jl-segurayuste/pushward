@@ -72,3 +72,44 @@ def test_sin_secretos_no_hay_hallazgos(git_repo):
     commit_all(git_repo)
     result = _run(git_repo)
     assert result.findings == []
+
+
+def test_asignacion_con_anotacion_de_tipo_se_marca(git_repo):
+    # Bug real encontrado 2026-08-09: "nombre: Tipo = valor" (anotación de tipo de
+    # Python) no coincidía porque el separador esperado justo tras la palabra clave
+    # era "=", no "str".
+    write(git_repo, "config.py", 'smtp_password: str = "hunter22345"\n')
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert any("credencial en claro" in f.title for f in result.findings)
+
+
+def test_asignacion_por_subindice_se_marca(git_repo):
+    # Bug real encontrado 2026-08-09: os.environ["API_TOKEN"] = "..." no coincidía
+    # porque la clave va entre corchetes y comillas, no como identificador suelto.
+    write(git_repo, "config.py", 'os.environ["API_TOKEN"] = "abc123456789xyz"\n')
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert any("credencial en claro" in f.title for f in result.findings)
+
+
+def test_anotacion_de_tipo_sin_valor_no_se_marca(git_repo):
+    write(git_repo, "config.py", "password: str\n")
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert result.findings == []
+
+
+def test_palabra_clave_como_prefijo_de_otra_palabra_no_se_marca(git_repo):
+    # "secretary" empieza por "secret" pero no es una credencial.
+    write(git_repo, "config.py", 'secretary_name = "Jane Doe"\n')
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert result.findings == []
+
+
+def test_subindice_con_clave_no_sensible_no_se_marca(git_repo):
+    write(git_repo, "config.py", 'config["timeout"] = "30 seconds ok"\n')
+    commit_all(git_repo)
+    result = _run(git_repo)
+    assert result.findings == []

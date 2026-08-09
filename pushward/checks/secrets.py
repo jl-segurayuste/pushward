@@ -17,11 +17,28 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
 
 _ASSIGNMENT = re.compile(
     r"""(?imx)
-    ^\s*[\w.]*(password|passwd|secret|api_key|apikey|token)\s*[:=]\s*
+    ^\s*
     (?:
-        ['"]([^'"]{6,})['"]      # valor entre comillas: literal, se acepta tal cual
+        [\w.]*(?P<keyword>password|passwd|secret|api_key|apikey|token)
         |
-        ([^\s'"]{6,})            # sin comillas: se filtra abajo si tiene pinta de código
+        # dict["password"] = ..., os.environ['API_TOKEN'] = ... -- la clave va
+        # entre corchetes y comillas, no como identificador suelto.
+        [\w.]*\[\s*['"]\w*(?P<keyword_bracket>password|passwd|secret|api_key|apikey|token)\w*['"]\s*\]
+    )
+    \s*
+    (?:
+        # anotación de tipo de Python ("nombre: Tipo = valor") -- sin esto, el
+        # separador esperado justo después de la palabra clave sería "str", no
+        # "=", y la asignación entera pasaba desapercibida.
+        :\s*[A-Za-z_][\w\[\], .]*\s*=
+        |
+        [:=]                      # asignación normal (YAML "clave: valor" / Python "clave = valor")
+    )
+    \s*
+    (?:
+        ['"](?P<quoted>[^'"]{6,})['"]   # valor entre comillas: literal, se acepta tal cual
+        |
+        (?P<unquoted>[^\s'"]{6,})       # sin comillas: se filtra abajo si tiene pinta de código
     )
     """
 )
@@ -66,7 +83,8 @@ class SecretsCheck:
 
                 m = _ASSIGNMENT.search(line)
                 if m:
-                    quoted, unquoted = m.group(2), m.group(3)
+                    keyword = m.group("keyword") or m.group("keyword_bracket")
+                    quoted, unquoted = m.group("quoted"), m.group("unquoted")
                     if quoted is None and _CODE_LIKE.search(unquoted):
                         value = None
                     else:
@@ -75,7 +93,7 @@ class SecretsCheck:
                         findings.append(
                             Finding(
                                 severity="medium",
-                                title=f"Asignación de credencial en claro ({m.group(1)})",
+                                title=f"Asignación de credencial en claro ({keyword})",
                                 detail="Heurística -- puede ser un valor de ejemplo/placeholder real.",
                                 path=rel,
                                 line=line_no,
