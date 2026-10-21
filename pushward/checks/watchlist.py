@@ -11,7 +11,7 @@ from pushward.watchlist_store import build_pattern
 class WatchlistCheck:
     """El diferenciador real frente a un escáner de secretos normal: una
     lista global (fuera del repo, en ~/.config/pushward/watchlist.txt) de
-    nombres/empresas/dominios reales que Jose no quiere ver en NINGÚN repo.
+    nombres/empresas/dominios reales que no deben aparecer en NINGÚN repo.
     Los escáneres por regex no distinguen una IP/nombre real de un ejemplo
     inventado -- esto sí, porque el usuario ya le dijo qué es real.
     """
