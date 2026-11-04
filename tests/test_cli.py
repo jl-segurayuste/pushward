@@ -108,3 +108,41 @@ def test_watchlist_add_list_remove_via_cli(tmp_path, monkeypatch, capsys):
     main(["watchlist", "list"])
     out = capsys.readouterr().out
     assert "vacía" in out
+
+
+def test_pre_push_hook_ve_secretos_borrados_en_un_commit_posterior(git_repo, monkeypatch):
+    """El secreto viaja en el historial aunque el último commit lo quite."""
+    write(git_repo, "clean.py", "x = 1\n")
+    commit_all(git_repo, "primero")
+    old = _rev_parse(git_repo)
+    write(git_repo, "conf.py", 'token = "ghp_' + "a" * 36 + '"\n')
+    commit_all(git_repo, "con secreto")
+    (git_repo / "conf.py").unlink()
+    commit_all(git_repo, "lo quito")
+    new = _rev_parse(git_repo)
+    monkeypatch.chdir(git_repo)
+    monkeypatch.setattr("sys.stdin", io.StringIO(f"refs/heads/main {new} refs/heads/main {old}\n"))
+    assert main(["pre-push-hook"]) == 1
+
+
+def test_pre_push_hook_lee_el_commit_no_el_arbol_de_trabajo(git_repo, monkeypatch):
+    write(git_repo, "clean.py", "x = 1\n")
+    commit_all(git_repo, "primero")
+    old = _rev_parse(git_repo)
+    write(git_repo, "conf.py", 'token = "ghp_' + "a" * 36 + '"\n')
+    commit_all(git_repo, "con secreto")
+    new = _rev_parse(git_repo)
+    write(git_repo, "conf.py", "limpio = 1\n")          # quitado del árbol, sin commitear
+    monkeypatch.chdir(git_repo)
+    monkeypatch.setattr("sys.stdin", io.StringIO(f"refs/heads/main {new} refs/heads/main {old}\n"))
+    assert main(["pre-push-hook"]) == 1
+
+
+def test_pre_push_hook_remoto_desconocido_no_deja_pasar_a_ciegas(git_repo, monkeypatch):
+    """push --force sobre un remoto con commits que no están aquí: antes no se escaneaba nada."""
+    write(git_repo, "id_rsa", "-----BEGIN RSA PRIVATE KEY-----\nx\n")
+    commit_all(git_repo, "primero")
+    new = _rev_parse(git_repo)
+    monkeypatch.chdir(git_repo)
+    monkeypatch.setattr("sys.stdin", io.StringIO(f"refs/heads/main {new} refs/heads/main {'1' * 40}\n"))
+    assert main(["pre-push-hook"]) == 1

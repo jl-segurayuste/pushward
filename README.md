@@ -56,11 +56,17 @@ pushward watchlist list
 pushward watchlist remove "Nombre Real"
 ```
 
+El hook `pre-push` revisa **el contenido de cada commit que se sube**, no el árbol de trabajo:
+un secreto añadido en un commit y quitado en el siguiente también se ve (viaja en el historial).
+Bloquea el push si hay algo `high`, si un check falla al ejecutarse o si no puede saber qué se va
+a subir (por ejemplo, un `push --force` sobre un remoto con commits que no tienes: entonces revisa
+todo lo que no esté ya en ningún remoto conocido).
+
 ## Checks incluidos
 
 | Check | Qué detecta |
 |---|---|
-| `secrets` | Claves privadas, tokens AWS/GitHub/Slack/OpenAI, JWT, asignaciones de credenciales en claro |
+| `secrets` | Claves privadas (también cifradas y PGP), tokens AWS/GitHub/Slack/OpenAI/Anthropic, JWT, asignaciones de credenciales en claro (Python, YAML, `.env`, `export`, JS, PowerShell, JSON) |
 | `private_ips` | IPs de rangos privados (10.x, 172.16-31.x, 192.168.x) |
 | `watchlist` | Nombres/empresas/dominios reales que tú has marcado como "nunca en un repo" |
 | `dni_pattern` | DNI/NIE español con dígito de control válido (no marca placeholders tipo `12345678A`) |

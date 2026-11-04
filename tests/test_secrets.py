@@ -1,3 +1,4 @@
+import pytest
 from conftest import commit_all, write
 
 from pushward.checks.secrets import SecretsCheck
@@ -113,3 +114,44 @@ def test_subindice_con_clave_no_sensible_no_se_marca(git_repo):
     commit_all(git_repo)
     result = _run(git_repo)
     assert result.findings == []
+
+
+def _scan(git_repo, name, content):
+    from pushward.checks.secrets import SecretsCheck
+
+    write(git_repo, name, content)
+    return SecretsCheck().run([git_repo / name], git_repo).findings
+
+
+@pytest.mark.parametrize("linea", [
+    "export API_TOKEN=Zx81kq0LmP3vR7tY\n",
+    '$password = "Pa55w0rd-real!"\n',
+    '{"password": "Pa55w0rd-real!"}\n',
+    '  "api_key": "Zx81kq0LmP3vR7tY",\n',
+    'const secret = "Zx81kq0LmP3vR7tY";\n',
+])
+def test_asignaciones_en_otros_lenguajes_se_marcan(git_repo, linea):
+    assert _scan(git_repo, "x.txt", linea)
+
+
+@pytest.mark.parametrize("linea", [
+    'k = "sk-proj-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"\n',
+    'k = "sk-ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"\n',
+    "-----BEGIN ENCRYPTED PRIVATE KEY-----\n",
+    "-----BEGIN PGP PRIVATE KEY BLOCK-----\n",
+    "aws = ASIAABCDEFGHIJKLMNOP\n",
+    "t = github_pat_" + "A1b2C3d4E5" * 7 + "\n",
+])
+def test_formatos_de_clave_actuales(git_repo, linea):
+    assert any(f.severity == "high" for f in _scan(git_repo, "x.txt", linea))
+
+
+def test_fichero_latin1_no_se_salta(git_repo):
+    (git_repo / "a.env").write_bytes("DB_PASSWORD=contraseña-real\n".encode("latin-1"))
+    from pushward.checks.secrets import SecretsCheck
+
+    assert SecretsCheck().run([git_repo / "a.env"], git_repo).findings
+
+
+def test_palabras_con_sk_no_se_marcan(git_repo):
+    assert not _scan(git_repo, "x.txt", 'css = "desk-top-something-long-name-xx"\n')

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import argparse
 import sys
+import tempfile
 from pathlib import Path
 
 from pushward import hook, watchlist_store
 from pushward.plugin import SEVERITIES
 from pushward.report import build_report, write_json
 from pushward.runner import discover_checks, run_checks
-from pushward.scanner import EMPTY_TREE_SHA, ZERO_OID, diff_files
+from pushward.scanner import ZERO_OID, ScanError, commits_to_push, materialize_commits
 
 _SEVERITY_ORDER = {sev: idx for idx, sev in enumerate(SEVERITIES)}
 
@@ -36,31 +37,36 @@ def _cmd_scan(args: argparse.Namespace) -> int:
 def _cmd_pre_push_hook(args: argparse.Namespace) -> int:
     """Invocado por el hook instalado. Git pasa por stdin una línea por ref
     que se va a empujar: "<local ref> <local oid> <remote ref> <remote oid>".
-    En pre-push el índice ya está vacío (el commit ya se hizo), así que no
-    vale mirar el stage -- hay que diffear el rango real que se va a subir.
+    Se escanea el contenido de cada commit que se sube, no el árbol de trabajo.
     """
     repo_path = Path.cwd()
-    all_files: set[Path] = set()
+    with tempfile.TemporaryDirectory(prefix="pushward-") as tmp:
+        root = Path(tmp)
+        files: list[Path] = []
+        for line in sys.stdin:
+            parts = line.split()
+            if len(parts) != 4:
+                continue
+            _local_ref, local_oid, _remote_ref, remote_oid = parts
+            if local_oid == ZERO_OID:
+                continue  # se está borrando una rama, nada que subir
+            try:
+                commits = commits_to_push(repo_path, local_oid, remote_oid)
+                files.extend(materialize_commits(repo_path, commits, root))
+            except ScanError as exc:
+                print(f"pushward: no se pudo revisar el push, se bloquea: {exc}", file=sys.stderr)
+                return 1
 
-    for line in sys.stdin:
-        parts = line.split()
-        if len(parts) != 4:
-            continue
-        _local_ref, local_oid, _remote_ref, remote_oid = parts
-        if local_oid == ZERO_OID:
-            continue  # se está borrando una rama, nada que subir
-        range_arg = (
-            f"{EMPTY_TREE_SHA}..{local_oid}" if remote_oid == ZERO_OID else f"{remote_oid}..{local_oid}"
-        )
-        all_files.update(diff_files(repo_path, range_arg))
+        if not files:
+            return 0
 
-    if not all_files:
-        return 0
+        results = run_checks(root, files=files)
+        report = build_report(repo_path, results)
+        print(report.to_console())
 
-    results = run_checks(repo_path, files=sorted(all_files))
-    report = build_report(repo_path, results)
-    print(report.to_console())
-
+    if any(r.error for r in results):
+        print("pushward: algún check falló al ejecutarse; se bloquea el push.", file=sys.stderr)
+        return 1
     worst = report.worst_severity()
     if worst is not None and _SEVERITY_ORDER[worst] >= _SEVERITY_ORDER["high"]:
         return 1

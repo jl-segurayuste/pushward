@@ -7,19 +7,26 @@ from pushward.plugin import CheckResult, Finding
 from pushward.scanner import read_text
 
 _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
-    ("Clave privada (PEM)", re.compile(r"-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"), "high"),
-    ("AWS Access Key ID", re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "high"),
-    ("Token de GitHub", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b"), "high"),
-    ("Token de Slack", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"), "high"),
-    ("Clave de API de OpenAI", re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"), "high"),
+    ("Clave privada (PEM)",
+     re.compile(r"-----BEGIN (?:(?:RSA|EC|OPENSSH|DSA|ENCRYPTED|PGP) )?PRIVATE KEY(?: BLOCK)?-----"), "high"),
+    ("AWS Access Key ID", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"), "high"),
+    ("Token de GitHub", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,})\b"), "high"),
+    ("Token de Slack", re.compile(r"\bxox[baprse]-[A-Za-z0-9-]{10,}\b"), "high"),
+    # Las claves actuales llevan prefijo con guiones (sk-proj-…, sk-ant-api03-…): el patrón antiguo
+    # solo veía las sk-<alfanumérico> de antes.
+    ("Clave de API de OpenAI/Anthropic",
+     re.compile(r"\bsk-(?:(?:proj|svcacct|admin|ant-api\d+|ant-admin\d+)-)?[A-Za-z0-9_-]{20,}"), "high"),
     ("JWT", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"), "medium"),
 ]
 
 _ASSIGNMENT = re.compile(
     r"""(?imx)
-    ^\s*
+    ^\s*[{\[,]?\s*
+    # export X=… (shell), const/let/var (JS), $x = … (PowerShell/PHP/Perl), "x": … (JSON)
+    (?:(?:export|const|let|var|readonly|declare|local|my)\s+)?
+    [$@]?["']?
     (?:
-        [\w.]*(?P<keyword>password|passwd|secret|api_key|apikey|token)
+        [\w.]*(?P<keyword>password|passwd|secret|api_key|apikey|token)["']?
         |
         # dict["password"] = ..., os.environ['API_TOKEN'] = ... -- la clave va
         # entre corchetes y comillas, no como identificador suelto.
