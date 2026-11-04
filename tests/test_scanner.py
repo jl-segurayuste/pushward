@@ -80,3 +80,11 @@ def test_diff_files_contra_empty_tree_ve_todo(git_repo):
 
     files = diff_files(git_repo, f"{EMPTY_TREE_SHA}..{new}")
     assert {f.name for f in files} == {"a.py", "b.py"}
+
+
+def test_list_files_con_nombre_no_ascii(git_repo):
+    """git escapa las rutas no ASCII por defecto y esos ficheros no se podían abrir (ni escanear)."""
+    write(git_repo, "configuración.env", "x = 1\n")
+    commit_all(git_repo)
+    files = list_files(git_repo)
+    assert [f.name for f in files] == ["configuración.env"] and files[0].exists()

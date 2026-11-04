@@ -27,9 +27,9 @@ def _git_name_only(repo_path: Path, cmd: list[str]) -> list[Path]:
 def list_files(repo_path: Path, *, staged: bool = False) -> list[Path]:
     """Ficheros a escanear: `git ls-files` (todo el árbol) o el diff en stage."""
     if staged:
-        cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"]
+        cmd = ["git", "-c", "core.quotePath=false", "diff", "--cached", "--name-only", "--diff-filter=ACM"]
     else:
-        cmd = ["git", "ls-files"]
+        cmd = ["git", "-c", "core.quotePath=false", "ls-files"]
     return _git_name_only(repo_path, cmd)
 
 
@@ -38,7 +38,7 @@ def diff_files(repo_path: Path, range_arg: str) -> list[Path]:
     -- lo que de verdad se necesita en un hook pre-push, donde el stage ya
     está vacío (el commit ya se hizo) y `list_files(staged=True)` no vería nada.
     """
-    cmd = ["git", "diff", "--name-only", "--diff-filter=ACM", range_arg]
+    cmd = ["git", "-c", "core.quotePath=false", "diff", "--name-only", "--diff-filter=ACM", range_arg]
     return _git_name_only(repo_path, cmd)
 
 
