@@ -60,3 +60,36 @@ def test_build_pattern_entrada_de_un_solo_token():
 def test_build_pattern_concatenado_sin_separador_sigue_casando():
     pattern = build_pattern("Ruben Blanco")
     assert pattern.search("carpeta/RubenBlanco/archivo.txt")
+
+
+def test_add_sin_salto_final_no_pega_lineas(tmp_path):
+    path = tmp_path / "wl.txt"
+    path.write_text("Ana")
+    add_entry("Luis", path)
+    assert load_entries(path) == ["Ana", "Luis"]
+
+
+def test_remove_conserva_comentarios(tmp_path):
+    path = tmp_path / "wl.txt"
+    path.write_text("# nombres reales\nAna\nLuis\n")
+    remove_entry("Ana", path)
+    assert path.read_text() == "# nombres reales\nLuis\n"
+
+
+def test_fichero_solo_legible_por_el_dueno(tmp_path):
+    import os
+
+    old = os.umask(0o022)
+    try:
+        path = tmp_path / "cfg" / "wl.txt"
+        add_entry("Ana", path)
+    finally:
+        os.umask(old)
+    assert path.stat().st_mode & 0o777 == 0o600
+    assert path.parent.stat().st_mode & 0o777 == 0o700
+
+
+def test_build_pattern_entradas_con_simbolos_en_los_bordes():
+    assert build_pattern("+34 600 111 222").search("tel +34 600111222")
+    assert build_pattern("c/ Mayor 3,").search("vive en c/ Mayor 3, Madrid")
+    assert not build_pattern("Ana").search("Mariana")

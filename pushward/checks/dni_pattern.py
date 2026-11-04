@@ -13,8 +13,12 @@ _NIE_PREFIX = {"X": "0", "Y": "1", "Z": "2"}
 # (p.ej. "...45.73846735Z"): la "Z" de UTC hace que el número parezca DNI
 # ("8 dígitos + letra"), y con miles de líneas de log da la casualidad de que
 # algunos hasta pasan la validación del dígito de control por puro azar.
-_DNI_RE = re.compile(r"(?<!\.)\b(\d{8})[-\s]?([A-Za-z])\b")
-_NIE_RE = re.compile(r"(?<!\.)\b([XYZxyz])(\d{7})[-\s]?([A-Za-z])\b")
+# Los bordes no usan \b: el «_» cuenta como letra para \b y «nomina_12345678A.pdf» no casaba.
+# Se admite también el formato con puntos de miles («12.345.678-A»).
+_DNI_RE = re.compile(
+    r"(?<![\d.A-Za-z])(\d{8}|\d{1,2}\.\d{3}\.\d{3})[-\s]?([A-Za-z])(?![A-Za-z\d])"
+)
+_NIE_RE = re.compile(r"(?<![\d.A-Za-z])([XYZxyz])(\d{7})[-\s]?([A-Za-z])(?![A-Za-z\d])")
 
 
 def _expected_letter(number: str) -> str:
@@ -46,7 +50,7 @@ class DniPatternCheck:
 
             for line_no, line in enumerate(text.splitlines(), start=1):
                 for m in _DNI_RE.finditer(line):
-                    number, letter = m.group(1), m.group(2).upper()
+                    number, letter = m.group(1).replace(".", "").zfill(8), m.group(2).upper()
                     if letter == _expected_letter(number):
                         findings.append(
                             Finding(

@@ -56,3 +56,15 @@ def test_texto_sin_patron_dni_no_se_marca(git_repo):
     commit_all(git_repo)
     result = _run(git_repo)
     assert result.findings == []
+
+
+def test_dni_con_puntos_y_pegado_a_guion_bajo_se_marca(git_repo):
+    write(git_repo, "notes.md", "DNI 12.345.678-Z\nnomina_12345678Z.pdf\n")
+    commit_all(git_repo)
+    assert len(_run(git_repo).findings) == 2
+
+
+def test_dni_dentro_de_un_identificador_alfanumerico_no_se_marca(git_repo):
+    write(git_repo, "notes.md", "hash a12345678Z9 y ref 112345678Z\n")
+    commit_all(git_repo)
+    assert _run(git_repo).findings == []
