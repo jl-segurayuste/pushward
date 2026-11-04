@@ -46,6 +46,7 @@ pushward scan .                         # informe en consola
 pushward scan . --staged                # solo lo que hay en stage (usado por el hook)
 pushward scan . --json
 pushward scan . --fail-on high          # código de salida 1 si hay algo "high"
+                                        # código 2 si algún check no se pudo ejecutar (análisis incompleto)
 pushward list-checks
 
 pushward install-hook .                 # instala un hook pre-push en este repo

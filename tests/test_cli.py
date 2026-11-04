@@ -146,3 +146,14 @@ def test_pre_push_hook_remoto_desconocido_no_deja_pasar_a_ciegas(git_repo, monke
     monkeypatch.chdir(git_repo)
     monkeypatch.setattr("sys.stdin", io.StringIO(f"refs/heads/main {new} refs/heads/main {'1' * 40}\n"))
     assert main(["pre-push-hook"]) == 1
+
+
+def test_check_que_revienta_sale_2(tmp_path, monkeypatch, capsys):
+    from pushward import cli
+    from pushward.plugin import CheckResult
+
+    monkeypatch.setattr(cli, "run_checks", lambda *a, **k: [
+        CheckResult(check_name="roto", summary="El check falló", error="Traceback..."),
+    ])
+    assert cli.main(["scan", str(tmp_path)]) == 2
+    assert "roto" in capsys.readouterr().err

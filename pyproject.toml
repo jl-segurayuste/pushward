@@ -1,6 +1,6 @@
 [project]
 name = "pushward"
-version = "0.2.2"
+version = "0.2.3"
 description = "Escáner pre-commit/pre-push de secretos y datos reales (IPs, nombres, entidades) antes de que lleguen a un repo — arquitectura de plugins."
 readme = "README.md"
 license = { text = "MIT" }
