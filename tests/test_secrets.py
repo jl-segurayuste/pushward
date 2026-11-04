@@ -19,7 +19,7 @@ def test_detecta_clave_privada_pem(git_repo):
 
 
 def test_detecta_aws_key(git_repo):
-    write(git_repo, "config.py", "AWS_KEY = 'AKIAABCDEFGHIJKLMNOP'\n")
+    write(git_repo, "config.py", "AWS_KEY = 'AKIA" + "ABCDEFGHIJKLMNOP'\n")
     commit_all(git_repo)
     result = _run(git_repo)
     assert any("AWS" in f.title for f in result.findings)
@@ -123,6 +123,8 @@ def _scan(git_repo, name, content):
     return SecretsCheck().run([git_repo / name], git_repo).findings
 
 
+# Los valores de prueba se montan por partes: escritos enteros, el escaneo de secretos de
+# GitHub los tomaba por claves reales filtradas.
 @pytest.mark.parametrize("linea", [
     "export API_TOKEN=Zx81kq0LmP3vR7tY\n",
     '$password = "Pa55w0rd-real!"\n',
@@ -135,11 +137,11 @@ def test_asignaciones_en_otros_lenguajes_se_marcan(git_repo, linea):
 
 
 @pytest.mark.parametrize("linea", [
-    'k = "sk-proj-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"\n',
-    'k = "sk-ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"\n',
+    'k = "sk-' + 'proj-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"\n',
+    'k = "sk-' + 'ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"\n',
     "-----BEGIN ENCRYPTED PRIVATE KEY-----\n",
     "-----BEGIN PGP PRIVATE KEY BLOCK-----\n",
-    "aws = ASIAABCDEFGHIJKLMNOP\n",
+    "aws = ASIA" + "ABCDEFGHIJKLMNOP\n",
     "t = github_pat_" + "A1b2C3d4E5" * 7 + "\n",
 ])
 def test_formatos_de_clave_actuales(git_repo, linea):
