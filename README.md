@@ -20,6 +20,12 @@ pushward — /ruta/al/repo
 Total: 2 hallazgo(s) — 2 high
 ```
 
+## Así se ve
+
+![Salida de pushward sobre un proyecto de ejemplo](docs/img/demo.svg)
+
+<sub>Ejecución real sobre un repo de ejemplo con un DNI, una clave de AWS, una IP interna, un nombre de la watchlist y un PDF de nóminas (todos los datos son ficticios).</sub>
+
 ## Por qué existe
 
 Los escáneres de secretos habituales (git-secrets, gitleaks...) casan patrones:
@@ -83,8 +89,9 @@ Vive fuera de cualquier repo, en `~/.config/pushward/watchlist.txt` —
 justo porque el propio fichero contendría los nombres que quieres proteger,
 así que no tiene sentido que viva dentro de un repo que podrías publicar.
 Casa variantes de mayúsculas y separador (`Ruben.Blanco` == `ruben_blanco` ==
-`RubenBlanco`), con límites de palabra para no marcar falsos positivos como
-"AcmeCorp" dentro de "consumo".
+`RubenBlanco`) y sin tener en cuenta las tildes (`Laura Gómez` == `laura.gomez`),
+con límites de palabra para no marcar falsos positivos como "AcmeCorp" dentro
+de "consumo".
 
 ## Excluir ficheros del escaneo (.pushwardignore)
 

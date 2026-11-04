@@ -32,7 +32,7 @@ class SensitiveFilenamesCheck:
                 findings.append(
                     Finding(
                         severity="medium",
-                        title=f"Nombre de fichero sensible: {path.name}",
+                        title="Nombre de fichero sensible",
                         detail="El nombre sugiere contenido personal/confidencial -- revisar antes de publicar.",
                         path=rel,
                     )

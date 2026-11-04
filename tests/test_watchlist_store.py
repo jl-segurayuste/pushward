@@ -93,3 +93,10 @@ def test_build_pattern_entradas_con_simbolos_en_los_bordes():
     assert build_pattern("+34 600 111 222").search("tel +34 600111222")
     assert build_pattern("c/ Mayor 3,").search("vive en c/ Mayor 3, Madrid")
     assert not build_pattern("Ana").search("Mariana")
+
+
+def test_build_pattern_ignora_tildes():
+    assert build_pattern("Laura Gómez").search("revisar con laura.gomez")
+    assert build_pattern("Laura Gomez").search("Laura Gómez firmó")
+    assert build_pattern("Muñoz").search("usuario: munoz")
+    assert not build_pattern("Gómez").search("Gomezano")

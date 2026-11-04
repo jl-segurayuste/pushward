@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import unicodedata
 from pathlib import Path
 
 WATCHLIST_PATH = Path.home() / ".config" / "pushward" / "watchlist.txt"
@@ -52,15 +53,31 @@ def remove_entry(value: str, path: Path = WATCHLIST_PATH) -> bool:
     return True
 
 
-def build_pattern(entry: str) -> re.Pattern[str]:
+def fold(text: str) -> str:
+    """Sin tildes ni diacríticos: «Gómez» y «gomez», «Muñoz» y «munoz» son lo mismo."""
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
+
+
+class WatchPattern:
+    """Patrón que compara sin tildes: un nombre se escribe a menudo sin ellas (correos, usuarios,
+    nombres de fichero) y «Laura Gómez» no casaba con «laura.gomez»."""
+
+    def __init__(self, regex: re.Pattern[str]) -> None:
+        self._regex = regex
+
+    def search(self, text: str) -> re.Match[str] | None:
+        return self._regex.search(fold(text))
+
+
+def build_pattern(entry: str) -> WatchPattern:
     """Casa variantes de separador (punto/guion/guion_bajo/espacio/sin separador),
     insensible a mayúsculas -- la misma clase de miss que dejó pasar
     "Ruben.Blanco" en una primera pasada case-sensitive de sustitución real.
     """
-    tokens = [t for t in _SEPARATOR_RE.split(entry.strip()) if t]
+    tokens = [t for t in _SEPARATOR_RE.split(fold(entry).strip()) if t]
     if not tokens:
-        return re.compile(r"(?!x)x")  # nunca casa
+        return WatchPattern(re.compile(r"(?!x)x"))  # nunca casa
     inner = r"[\s._-]*".join(re.escape(t) for t in tokens)
     # \b solo funciona junto a una letra o un dígito: una entrada que empieza por «+» (un
     # teléfono) o acaba en «,» no casaba nunca. Se exige que no haya letra ni dígito al lado.
-    return re.compile(rf"(?<![^\W_]){inner}(?![^\W_])", re.IGNORECASE)
+    return WatchPattern(re.compile(rf"(?<![^\W_]){inner}(?![^\W_])", re.IGNORECASE))

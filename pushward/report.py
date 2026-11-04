@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from pushward.plugin import SEVERITIES, CheckResult
+from pushward.plugin import SEVERITIES, CheckResult, Finding
 
 _SEVERITY_ORDER = {sev: idx for idx, sev in enumerate(SEVERITIES)}
 
@@ -14,7 +14,7 @@ class Report(BaseModel):
     repo_path: str
     results: list[CheckResult]
 
-    def all_findings(self) -> list[tuple[str, object]]:
+    def all_findings(self) -> list[tuple[str, Finding]]:
         return [(r.check_name, f) for r in self.results for f in r.findings]
 
     def worst_severity(self) -> str | None:
